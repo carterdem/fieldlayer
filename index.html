@@ -3,779 +3,552 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FieldLayer — The Physical Layer for AI Agents</title>
-  <meta name="description" content="One API to dispatch humans for real-world tasks. Inspections, photos, deliveries — your AI agent calls the shots.">
+  <title>FieldLayer — Physical Infrastructure for AI Agents</title>
+  <meta name="description" content="One API to dispatch humans for real-world tasks. Inspections, photos, verification — your AI agent calls the shots.">
   
-  <!-- Favicon -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%230F172A' width='100' height='100' rx='20'/><text y='.76em' x='12' font-size='65' font-weight='bold' fill='%2338BDF8'>FL</text></svg>">
   
-  <!-- Fonts -->
+  <!-- Fonts: Satoshi (clean, modern, distinctive) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
           fontFamily: {
-            mono: ['"IBM Plex Mono"', 'monospace'],
-            display: ['"Space Mono"', 'monospace'],
+            sans: ['Satoshi', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
           },
           colors: {
-            terminal: {
-              green: '#00ff41',
-              dim: '#00aa2a',
-              dark: '#003d00',
-              black: '#0a0a0a',
-              gray: '#1a1a1a',
+            slate: {
+              850: '#1a2234',
+              950: '#0c1322',
             },
-            amber: {
-              glow: '#ffb000',
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              200: '#b9e5fe',
+              300: '#7cd3fc',
+              400: '#38bdf8',
+              500: '#0ea5e9',
+              600: '#0284c7',
             }
-          },
-          animation: {
-            'blink': 'blink 1s step-end infinite',
-            'flicker': 'flicker 0.15s infinite',
-            'scan': 'scan 8s linear infinite',
-            'glow-pulse': 'glowPulse 2s ease-in-out infinite',
-            'type': 'typing 2s steps(30) forwards',
-          },
-          keyframes: {
-            blink: {
-              '0%, 100%': { opacity: '1' },
-              '50%': { opacity: '0' },
-            },
-            flicker: {
-              '0%': { opacity: '0.97' },
-              '50%': { opacity: '1' },
-              '100%': { opacity: '0.98' },
-            },
-            scan: {
-              '0%': { transform: 'translateY(-100%)' },
-              '100%': { transform: 'translateY(100vh)' },
-            },
-            glowPulse: {
-              '0%, 100%': { textShadow: '0 0 10px #00ff41, 0 0 20px #00ff41, 0 0 30px #00ff41' },
-              '50%': { textShadow: '0 0 5px #00ff41, 0 0 10px #00ff41' },
-            },
-            typing: {
-              'from': { width: '0' },
-              'to': { width: '100%' },
-            },
           },
         },
       },
     }
   </script>
   
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
   <style>
-    /* CRT Scanlines */
-    .crt-overlay {
-      pointer-events: none;
-      position: fixed;
-      inset: 0;
-      z-index: 1000;
-      background: repeating-linear-gradient(
-        0deg,
-        rgba(0, 0, 0, 0.15) 0px,
-        rgba(0, 0, 0, 0.15) 1px,
-        transparent 1px,
-        transparent 2px
-      );
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    
+    body {
+      font-family: 'Satoshi', system-ui, sans-serif;
+      background: linear-gradient(180deg, #0c1322 0%, #0f172a 100%);
+      color: #e2e8f0;
+      line-height: 1.6;
     }
     
-    .crt-glow {
-      text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41, 0 0 40px #00ff41;
-    }
-    
-    .crt-glow-subtle {
-      text-shadow: 0 0 5px #00ff41, 0 0 10px rgba(0, 255, 65, 0.5);
-    }
-    
-    .crt-box-glow {
-      box-shadow: 0 0 20px rgba(0, 255, 65, 0.3), inset 0 0 20px rgba(0, 255, 65, 0.05);
-    }
-    
-    /* Terminal window styling */
-    .terminal-window {
-      background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
-      border: 1px solid #00ff41;
-      box-shadow: 0 0 30px rgba(0, 255, 65, 0.2), inset 0 0 60px rgba(0, 255, 65, 0.03);
-    }
-    
-    .terminal-header {
-      background: linear-gradient(90deg, #002200 0%, #001100 100%);
-      border-bottom: 1px solid #00ff41;
-    }
-    
-    /* Cursor */
-    .cursor {
-      display: inline-block;
-      width: 0.6em;
-      height: 1.2em;
-      background: #00ff41;
-      margin-left: 2px;
-      animation: blink 1s step-end infinite;
-    }
-    
-    /* Grid pattern */
-    .grid-pattern {
+    /* Subtle grid background */
+    .bg-grid {
       background-image: 
-        linear-gradient(rgba(0, 255, 65, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 255, 65, 0.03) 1px, transparent 1px);
-      background-size: 50px 50px;
+        linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px);
+      background-size: 64px 64px;
     }
     
-    /* Amber accent for warnings/important */
-    .amber-glow {
-      text-shadow: 0 0 10px #ffb000, 0 0 20px #ffb000;
-      color: #ffb000;
+    /* Gradient text */
+    .text-gradient {
+      background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
     
-    /* Status indicator */
-    .status-dot {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      background: #00ff41;
-      border-radius: 50%;
-      box-shadow: 0 0 10px #00ff41;
-      animation: glowPulse 2s ease-in-out infinite;
+    /* Subtle glow for accent elements */
+    .glow-sm {
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
     }
     
-    /* Diagonal stripe pattern */
-    .hazard-stripe {
-      background: repeating-linear-gradient(
-        -45deg,
-        #ffb000 0px,
-        #ffb000 10px,
-        #0a0a0a 10px,
-        #0a0a0a 20px
-      );
+    /* Card styling */
+    .card {
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid rgba(71, 85, 105, 0.4);
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+      transition: all 0.25s ease;
     }
     
-    /* Selection color */
-    ::selection {
-      background: #00ff41;
-      color: #0a0a0a;
+    .card:hover {
+      border-color: rgba(56, 189, 248, 0.4);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
     }
     
-    /* Scrollbar */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #0a0a0a;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #00ff41;
-      border: 1px solid #003d00;
+    /* Button styles */
+    .btn-primary {
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+      color: white;
+      font-weight: 600;
+      padding: 0.875rem 1.75rem;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px rgba(14, 165, 233, 0.35);
     }
     
-    /* Glitch effect for hero */
-    @keyframes glitch {
-      0% { transform: translate(0); }
-      20% { transform: translate(-2px, 2px); }
-      40% { transform: translate(-2px, -2px); }
-      60% { transform: translate(2px, 2px); }
-      80% { transform: translate(2px, -2px); }
-      100% { transform: translate(0); }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(14, 165, 233, 0.45);
     }
     
-    .glitch:hover {
-      animation: glitch 0.3s ease infinite;
+    .btn-secondary {
+      background: rgba(51, 65, 85, 0.5);
+      color: #e2e8f0;
+      font-weight: 500;
+      padding: 0.875rem 1.75rem;
+      border-radius: 8px;
+      border: 1px solid rgba(71, 85, 105, 0.6);
+      transition: all 0.2s ease;
     }
     
-    /* Typing animation for code */
-    .type-effect {
-      overflow: hidden;
-      white-space: nowrap;
-      border-right: 2px solid #00ff41;
-      animation: typing 2s steps(40) forwards, blink 1s step-end infinite;
+    .btn-secondary:hover {
+      background: rgba(51, 65, 85, 0.8);
+      border-color: rgba(100, 116, 139, 0.8);
     }
     
-    /* Scan line animation */
-    .scan-line {
-      position: absolute;
-      width: 100%;
-      height: 4px;
-      background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.4), transparent);
-      animation: scan 8s linear infinite;
+    /* Code block */
+    .code-block {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(51, 65, 85, 0.6);
+      border-radius: 12px;
+      font-family: 'JetBrains Mono', monospace;
     }
     
-    /* Boot sequence styling */
-    .boot-text {
+    /* Feature badge */
+    .badge {
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #38bdf8;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.375rem 0.875rem;
+      border-radius: 100px;
+      letter-spacing: 0.025em;
+    }
+    
+    /* Step number */
+    .step-num {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1rem;
+      color: white;
+    }
+    
+    /* Section divider */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(71, 85, 105, 0.5) 20%, rgba(71, 85, 105, 0.5) 80%, transparent);
+    }
+    
+    /* Scroll animations */
+    .reveal {
       opacity: 0;
-      animation: fadeIn 0.5s ease forwards;
+      transform: translateY(24px);
+      transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1);
     }
     
-    @keyframes fadeIn {
-      to { opacity: 1; }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
     }
     
-    /* Responsive terminal */
-    @media (max-width: 768px) {
-      .terminal-window {
-        margin: 0 -1rem;
-        border-left: none;
-        border-right: none;
-      }
+    /* Logo companies strip */
+    .logo-strip {
+      opacity: 0.4;
+      filter: grayscale(100%);
+      transition: all 0.3s ease;
+    }
+    
+    .logo-strip:hover {
+      opacity: 0.7;
+      filter: grayscale(0%);
+    }
+    
+    /* Input styling */
+    input[type="email"] {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(71, 85, 105, 0.5);
+      border-radius: 8px;
+      padding: 0.875rem 1.25rem;
+      color: #e2e8f0;
+      transition: all 0.2s ease;
+    }
+    
+    input[type="email"]:focus {
+      outline: none;
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+    }
+    
+    input[type="email"]::placeholder {
+      color: #64748b;
     }
   </style>
 </head>
 
-<body class="bg-terminal-black text-terminal-green font-mono antialiased overflow-x-hidden">
-  <!-- CRT Scanline Overlay -->
-  <div class="crt-overlay"></div>
-  
-  <!-- Background Grid -->
-  <div class="fixed inset-0 grid-pattern pointer-events-none"></div>
+<body class="antialiased">
   
   <!-- Navigation -->
-  <nav class="fixed top-0 left-0 right-0 z-50 bg-terminal-black/95 border-b border-terminal-green/30">
-    <div class="max-w-7xl mx-auto px-4 md:px-8 py-4">
-      <div class="flex items-center justify-between">
-        <a href="#" class="flex items-center gap-3 group">
-          <span class="text-2xl crt-glow">⚡</span>
-          <span class="text-xl font-bold tracking-wider crt-glow-subtle">FIELDLAYER</span>
-          <span class="text-terminal-dim text-xs tracking-widest hidden sm:inline">v1.0.0</span>
-        </a>
-        
-        <div class="hidden md:flex items-center gap-1 text-sm">
-          <a href="#how-it-works" class="px-4 py-2 hover:bg-terminal-green/10 border border-transparent hover:border-terminal-green/30 transition-all">[HOW_IT_WORKS]</a>
-          <a href="#use-cases" class="px-4 py-2 hover:bg-terminal-green/10 border border-transparent hover:border-terminal-green/30 transition-all">[USE_CASES]</a>
-          <a href="#api" class="px-4 py-2 hover:bg-terminal-green/10 border border-transparent hover:border-terminal-green/30 transition-all">[API]</a>
-          <a href="#" class="ml-4 px-4 py-2 bg-terminal-green text-terminal-black font-bold hover:bg-terminal-dim transition-all">DOCS →</a>
-        </div>
-        
-        <button class="md:hidden text-terminal-green">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-          </svg>
-        </button>
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/50">
+    <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      <a href="#" class="font-bold text-xl flex items-center gap-2.5">
+        <span class="text-gradient">FieldLayer</span>
+      </a>
+      <div class="hidden md:flex items-center gap-8">
+        <a href="#how-it-works" class="text-sm text-slate-400 hover:text-white transition-colors">How it Works</a>
+        <a href="#use-cases" class="text-sm text-slate-400 hover:text-white transition-colors">Use Cases</a>
+        <a href="#api" class="text-sm text-slate-400 hover:text-white transition-colors">API</a>
+        <a href="#waitlist" class="btn-primary text-sm py-2.5 px-5">Get Early Access</a>
       </div>
     </div>
   </nav>
 
   <!-- Hero Section -->
-  <section class="min-h-screen flex items-center relative pt-20 pb-16">
-    <div class="scan-line"></div>
-    
-    <div class="w-full max-w-7xl mx-auto px-4 md:px-8">
-      <div class="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
-        <!-- Left: Text content -->
-        <div class="space-y-8">
-          <!-- System status -->
-          <div class="flex items-center gap-3 text-sm text-terminal-dim">
-            <span class="status-dot"></span>
-            <span class="tracking-widest">SYSTEM ONLINE</span>
-            <span class="text-terminal-green/50">|</span>
-            <span class="tracking-wider amber-glow">PRIVATE BETA</span>
-          </div>
-          
-          <!-- Main headline -->
-          <div class="space-y-4">
-            <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold leading-none tracking-tight">
-              <span class="block text-terminal-dim text-lg md:text-xl mb-4 tracking-widest">&gt; INITIALIZING...</span>
-              <span class="block crt-glow">THE PHYSICAL</span>
-              <span class="block crt-glow">LAYER</span>
-              <span class="block text-terminal-dim mt-2">FOR AI AGENTS_</span>
-            </h1>
-          </div>
-          
-          <!-- Description -->
-          <p class="text-lg md:text-xl text-terminal-dim leading-relaxed max-w-xl">
-            <span class="text-terminal-green">&gt;</span> One API to dispatch humans for real-world tasks.<br>
-            <span class="text-terminal-green">&gt;</span> Inspections. Photos. Deliveries.<br>
-            <span class="text-terminal-green">&gt;</span> <span class="crt-glow-subtle">Your AI agent calls the shots.</span>
-          </p>
-          
-          <!-- CTA -->
-          <div class="flex flex-col sm:flex-row gap-4 pt-4">
-            <form class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-              <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-terminal-dim">&gt;</span>
-                <input 
-                  type="email" 
-                  placeholder="you@company.com" 
-                  class="w-full sm:w-64 pl-8 pr-4 py-3 bg-terminal-black border-2 border-terminal-green text-terminal-green placeholder-terminal-dim focus:outline-none focus:shadow-[0_0_20px_rgba(0,255,65,0.3)] transition-all font-mono"
-                >
-              </div>
-              <button 
-                type="submit" 
-                class="px-6 py-3 bg-terminal-green text-terminal-black font-bold tracking-wider hover:bg-terminal-dim transition-all crt-box-glow whitespace-nowrap"
-              >
-                JOIN_WAITLIST →
-              </button>
-            </form>
-          </div>
-          
-          <div class="text-terminal-dim text-sm">
-            <a href="#api" class="hover:text-terminal-green transition-colors inline-flex items-center gap-2">
-              [VIEW_API_DOCS] <span class="text-terminal-green">↓</span>
-            </a>
-          </div>
+  <header class="min-h-screen flex items-center pt-16 bg-grid">
+    <div class="max-w-6xl mx-auto px-6 py-24">
+      
+      <div class="max-w-3xl">
+        <div class="mb-6">
+          <span class="badge">Now in Private Beta</span>
         </div>
         
-        <!-- Right: Terminal window -->
-        <div class="terminal-window p-0 relative">
-          <div class="terminal-header px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
-              <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
-              <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
-            </div>
-            <span class="text-xs text-terminal-dim tracking-wider">fieldlayer-cli</span>
-            <span class="text-xs text-terminal-dim">●</span>
-          </div>
-          <div class="p-6 text-sm leading-relaxed">
-            <div class="text-terminal-dim mb-2">$ fieldlayer status</div>
-            <div class="mb-4">
-              <span class="text-terminal-green">✓</span> API Gateway: <span class="crt-glow-subtle">OPERATIONAL</span><br>
-              <span class="text-terminal-green">✓</span> Worker Network: <span class="text-amber-glow">47,293 ACTIVE</span><br>
-              <span class="text-terminal-green">✓</span> Coverage: <span class="crt-glow-subtle">50 STATES + 12 COUNTRIES</span>
-            </div>
-            <div class="text-terminal-dim mb-2">$ fieldlayer dispatch --help</div>
-            <div class="mb-4 text-terminal-dim/80">
-              Dispatch physical tasks to verified human workers.<br><br>
-              <span class="text-terminal-green">USAGE:</span><br>
-              &nbsp;&nbsp;fieldlayer dispatch [OPTIONS] &lt;TASK_TYPE&gt;<br><br>
-              <span class="text-terminal-green">TASK_TYPES:</span><br>
-              &nbsp;&nbsp;inspection&nbsp;&nbsp;&nbsp;Property/site inspection<br>
-              &nbsp;&nbsp;photo&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Capture geotagged photos<br>
-              &nbsp;&nbsp;delivery&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Package delivery/pickup<br>
-              &nbsp;&nbsp;verify&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In-person verification
-            </div>
-            <div class="flex items-center">
-              <span class="text-terminal-green">$</span>
-              <span class="cursor ml-2"></span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Problem Section -->
-  <section class="py-24 md:py-32 relative border-y border-terminal-green/20">
-    <div class="max-w-4xl mx-auto px-4 md:px-8 text-center">
-      <div class="space-y-8">
-        <div class="text-terminal-dim tracking-widest text-sm mb-8">// THE PROBLEM</div>
+        <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tight">
+          The Physical Layer<br>
+          <span class="text-gradient">for AI Agents</span>
+        </h1>
         
-        <p class="text-xl md:text-2xl lg:text-3xl leading-relaxed">
-          <span class="text-terminal-dim">AI agents can browse the web, write code, and analyze data.</span>
+        <p class="text-xl text-slate-400 mt-8 max-w-xl leading-relaxed">
+          One API to dispatch humans for real-world tasks. Inspections, photos, verification — your AI agent calls the shots.
         </p>
         
-        <p class="text-xl md:text-2xl lg:text-3xl text-terminal-dim">
-          But when they need something in the physical world?
-        </p>
-        
-        <div class="py-8">
-          <span class="text-4xl md:text-6xl font-bold amber-glow tracking-wider">THEY'RE STUCK.</span>
+        <div class="flex flex-wrap gap-4 mt-10">
+          <a href="#waitlist" class="btn-primary">Get Early Access</a>
+          <a href="#api" class="btn-secondary">View API Docs →</a>
         </div>
         
-        <div class="hazard-stripe h-1 w-32 mx-auto my-8"></div>
-        
-        <p class="text-2xl md:text-3xl crt-glow">
-          FieldLayer bridges the gap.
-        </p>
-        
-        <p class="text-lg text-terminal-dim max-w-2xl mx-auto">
-          The missing infrastructure layer between digital intelligence and physical reality.
-        </p>
-      </div>
-    </div>
-  </section>
-
-  <!-- How It Works -->
-  <section id="how-it-works" class="py-24 md:py-32 relative">
-    <div class="max-w-7xl mx-auto px-4 md:px-8">
-      <div class="text-center mb-16">
-        <div class="text-terminal-dim tracking-widest text-sm mb-4">// PROTOCOL</div>
-        <h2 class="text-3xl md:text-5xl font-bold crt-glow">HOW IT WORKS</h2>
-        <p class="text-terminal-dim mt-4 tracking-wider">THREE STEPS. THAT'S IT.</p>
+        <div class="flex flex-wrap items-center gap-8 mt-12 text-sm text-slate-500">
+          <div class="flex items-center gap-2">
+            <i data-lucide="clock" class="w-4 h-4 text-brand-400"></i>
+            <span>4-hour SLA</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <i data-lucide="map-pin" class="w-4 h-4 text-brand-400"></i>
+            <span>50 state coverage</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <i data-lucide="shield-check" class="w-4 h-4 text-brand-400"></i>
+            <span>Verified workers</span>
+          </div>
+        </div>
       </div>
       
-      <div class="grid md:grid-cols-3 gap-6 md:gap-4">
-        <!-- Step 1 -->
-        <div class="terminal-window">
-          <div class="terminal-header px-4 py-2 flex items-center gap-2">
-            <span class="text-amber-glow font-bold">01</span>
-            <span class="text-terminal-dim text-xs tracking-wider">STEP_ONE</span>
-          </div>
-          <div class="p-6">
-            <div class="text-4xl mb-4">📡</div>
-            <h3 class="text-xl font-bold crt-glow-subtle mb-4">YOUR AGENT CALLS THE API</h3>
-            <p class="text-terminal-dim leading-relaxed text-sm">
-              Simple REST call with task details — location, requirements, deadline. That's all your agent needs.
-            </p>
-            <div class="mt-6 text-xs text-terminal-dim border-t border-terminal-green/20 pt-4">
-              <code>POST /v1/tasks/create</code>
-            </div>
-          </div>
+    </div>
+  </header>
+
+  <!-- Problem Section -->
+  <section class="py-24 md:py-32">
+    <div class="max-w-4xl mx-auto px-6 text-center reveal">
+      <h2 class="text-3xl md:text-4xl font-bold leading-snug">
+        AI agents can browse the web, write code, and analyze data.
+        <span class="text-slate-500">But when they need something in the physical world?</span>
+      </h2>
+      <p class="text-2xl md:text-3xl font-bold mt-6 text-gradient">
+        That's where we come in.
+      </p>
+    </div>
+  </section>
+
+  <!-- How it Works -->
+  <section id="how-it-works" class="py-24 md:py-32">
+    <div class="max-w-6xl mx-auto px-6">
+      
+      <div class="text-center mb-16 reveal">
+        <h2 class="text-3xl md:text-4xl font-bold">How It Works</h2>
+        <p class="text-slate-400 mt-4 text-lg">Simple integration. Powerful results.</p>
+      </div>
+      
+      <div class="grid md:grid-cols-3 gap-8">
+        
+        <div class="card p-8 reveal" style="transition-delay: 0.1s">
+          <div class="step-num mb-5">1</div>
+          <h3 class="text-xl font-bold mb-3">Your Agent Calls the API</h3>
+          <p class="text-slate-400">
+            Simple REST call with task details — location, requirements, deadline. Works with any AI framework.
+          </p>
         </div>
         
-        <!-- Step 2 -->
-        <div class="terminal-window">
-          <div class="terminal-header px-4 py-2 flex items-center gap-2">
-            <span class="text-amber-glow font-bold">02</span>
-            <span class="text-terminal-dim text-xs tracking-wider">STEP_TWO</span>
-          </div>
-          <div class="p-6">
-            <div class="text-4xl mb-4">👷</div>
-            <h3 class="text-xl font-bold crt-glow-subtle mb-4">WE DISPATCH A HUMAN</h3>
-            <p class="text-terminal-dim leading-relaxed text-sm">
-              Our network of verified workers accepts the task. Background-checked, trained, ready to go.
-            </p>
-            <div class="mt-6 text-xs border-t border-terminal-green/20 pt-4">
-              <span class="text-amber-glow">47,293</span> <span class="text-terminal-dim">workers online</span>
-            </div>
-          </div>
+        <div class="card p-8 reveal" style="transition-delay: 0.2s">
+          <div class="step-num mb-5">2</div>
+          <h3 class="text-xl font-bold mb-3">We Dispatch a Human</h3>
+          <p class="text-slate-400">
+            Our network of verified workers accepts the task. Background-checked, quality-assured, SLA-guaranteed.
+          </p>
         </div>
         
-        <!-- Step 3 -->
-        <div class="terminal-window">
-          <div class="terminal-header px-4 py-2 flex items-center gap-2">
-            <span class="text-amber-glow font-bold">03</span>
-            <span class="text-terminal-dim text-xs tracking-wider">STEP_THREE</span>
-          </div>
-          <div class="p-6">
-            <div class="text-4xl mb-4">✅</div>
-            <h3 class="text-xl font-bold crt-glow-subtle mb-4">RESULTS DELIVERED</h3>
-            <p class="text-terminal-dim leading-relaxed text-sm">
-              Structured data, geotagged photos, verification — delivered via webhook, ready for your agent.
-            </p>
-            <div class="mt-6 text-xs text-terminal-dim border-t border-terminal-green/20 pt-4">
-              <code>webhook: task.completed</code>
-            </div>
-          </div>
+        <div class="card p-8 reveal" style="transition-delay: 0.3s">
+          <div class="step-num mb-5">3</div>
+          <h3 class="text-xl font-bold mb-3">Results Delivered</h3>
+          <p class="text-slate-400">
+            Structured data, geotagged photos, verification metadata — delivered via webhook to your agent.
+          </p>
         </div>
+        
       </div>
     </div>
   </section>
 
   <!-- Use Cases -->
-  <section id="use-cases" class="py-24 md:py-32 relative bg-terminal-gray/30 border-y border-terminal-green/20">
-    <div class="max-w-7xl mx-auto px-4 md:px-8">
-      <div class="text-center mb-16">
-        <div class="text-terminal-dim tracking-widest text-sm mb-4">// APPLICATIONS</div>
-        <h2 class="text-3xl md:text-5xl font-bold crt-glow">BUILT FOR ANY INDUSTRY</h2>
-        <p class="text-terminal-dim mt-4">Real-world tasks your agents can finally complete.</p>
+  <section id="use-cases" class="py-24 md:py-32 border-y border-slate-800/50">
+    <div class="max-w-6xl mx-auto px-6">
+      
+      <div class="mb-16 reveal">
+        <span class="badge mb-4">Use Cases</span>
+        <h2 class="text-3xl md:text-4xl font-bold">Built for Industries Where<br>AI Meets the Physical World</h2>
       </div>
       
-      <div class="grid md:grid-cols-2 gap-4">
-        <!-- Insurance -->
-        <div class="border border-terminal-green/30 p-6 hover:border-terminal-green hover:crt-box-glow transition-all group bg-terminal-black/50">
-          <div class="flex items-start gap-4">
-            <div class="text-3xl">🛡️</div>
+      <div class="grid md:grid-cols-2 gap-6">
+        
+        <div class="card p-8 reveal">
+          <div class="flex items-start gap-5">
+            <div class="w-12 h-12 rounded-xl bg-brand-500/10 flex items-center justify-center shrink-0">
+              <i data-lucide="shield" class="w-6 h-6 text-brand-400"></i>
+            </div>
             <div>
-              <div class="text-xs text-terminal-dim tracking-widest mb-2">SECTOR_01</div>
-              <h3 class="text-xl font-bold crt-glow-subtle group-hover:crt-glow transition-all mb-3">INSURANCE</h3>
-              <p class="text-terminal-dim text-sm leading-relaxed">
-                Property inspections, claims verification, fraud detection. Get eyes on the ground in hours, not days.
-              </p>
-              <div class="mt-4 text-xs text-terminal-dim">
-                <span class="text-terminal-green">▸</span> avg response: <span class="text-amber-glow">2.4 hours</span>
-              </div>
+              <h3 class="text-xl font-bold mb-2">Insurance</h3>
+              <p class="text-slate-400">Property inspections, claims verification, pre-bind assessments, and fraud detection through physical evidence collection.</p>
             </div>
           </div>
         </div>
         
-        <!-- Real Estate -->
-        <div class="border border-terminal-green/30 p-6 hover:border-terminal-green hover:crt-box-glow transition-all group bg-terminal-black/50">
-          <div class="flex items-start gap-4">
-            <div class="text-3xl">🏠</div>
+        <div class="card p-8 reveal" style="transition-delay: 0.1s">
+          <div class="flex items-start gap-5">
+            <div class="w-12 h-12 rounded-xl bg-brand-500/10 flex items-center justify-center shrink-0">
+              <i data-lucide="building" class="w-6 h-6 text-brand-400"></i>
+            </div>
             <div>
-              <div class="text-xs text-terminal-dim tracking-widest mb-2">SECTOR_02</div>
-              <h3 class="text-xl font-bold crt-glow-subtle group-hover:crt-glow transition-all mb-3">REAL ESTATE</h3>
-              <p class="text-terminal-dim text-sm leading-relaxed">
-                MLS photography, move-in/out inspections, property condition reports. Scale your operations instantly.
-              </p>
-              <div class="mt-4 text-xs text-terminal-dim">
-                <span class="text-terminal-green">▸</span> photo quality: <span class="text-amber-glow">PRO-GRADE</span>
-              </div>
+              <h3 class="text-xl font-bold mb-2">Real Estate</h3>
+              <p class="text-slate-400">MLS photography, move-in/out inspections, property condition reports, and listing verification at scale.</p>
             </div>
           </div>
         </div>
         
-        <!-- Retail -->
-        <div class="border border-terminal-green/30 p-6 hover:border-terminal-green hover:crt-box-glow transition-all group bg-terminal-black/50">
-          <div class="flex items-start gap-4">
-            <div class="text-3xl">🏪</div>
+        <div class="card p-8 reveal" style="transition-delay: 0.2s">
+          <div class="flex items-start gap-5">
+            <div class="w-12 h-12 rounded-xl bg-brand-500/10 flex items-center justify-center shrink-0">
+              <i data-lucide="store" class="w-6 h-6 text-brand-400"></i>
+            </div>
             <div>
-              <div class="text-xs text-terminal-dim tracking-widest mb-2">SECTOR_03</div>
-              <h3 class="text-xl font-bold crt-glow-subtle group-hover:crt-glow transition-all mb-3">RETAIL</h3>
-              <p class="text-terminal-dim text-sm leading-relaxed">
-                Shelf audits, planogram compliance, competitor intelligence. Real-time visibility into any store.
-              </p>
-              <div class="mt-4 text-xs text-terminal-dim">
-                <span class="text-terminal-green">▸</span> coverage: <span class="text-amber-glow">500K+ STORES</span>
-              </div>
+              <h3 class="text-xl font-bold mb-2">Retail & CPG</h3>
+              <p class="text-slate-400">Shelf audits, planogram compliance, competitor intelligence, and mystery shopping across thousands of locations.</p>
             </div>
           </div>
         </div>
         
-        <!-- Logistics -->
-        <div class="border border-terminal-green/30 p-6 hover:border-terminal-green hover:crt-box-glow transition-all group bg-terminal-black/50">
-          <div class="flex items-start gap-4">
-            <div class="text-3xl">🚚</div>
+        <div class="card p-8 reveal" style="transition-delay: 0.3s">
+          <div class="flex items-start gap-5">
+            <div class="w-12 h-12 rounded-xl bg-brand-500/10 flex items-center justify-center shrink-0">
+              <i data-lucide="truck" class="w-6 h-6 text-brand-400"></i>
+            </div>
             <div>
-              <div class="text-xs text-terminal-dim tracking-widest mb-2">SECTOR_04</div>
-              <h3 class="text-xl font-bold crt-glow-subtle group-hover:crt-glow transition-all mb-3">LOGISTICS</h3>
-              <p class="text-terminal-dim text-sm leading-relaxed">
-                Proof of delivery, package verification, condition inspection. Close the loop on last-mile.
-              </p>
-              <div class="mt-4 text-xs text-terminal-dim">
-                <span class="text-terminal-green">▸</span> verification: <span class="text-amber-glow">GPS + PHOTO</span>
-              </div>
+              <h3 class="text-xl font-bold mb-2">Logistics</h3>
+              <p class="text-slate-400">Proof of delivery, package verification, condition inspection, and last-mile confirmation for your fulfillment workflows.</p>
             </div>
           </div>
         </div>
+        
       </div>
     </div>
   </section>
 
   <!-- API Section -->
-  <section id="api" class="py-24 md:py-32 relative">
-    <div class="max-w-5xl mx-auto px-4 md:px-8">
-      <div class="text-center mb-16">
-        <div class="text-terminal-dim tracking-widest text-sm mb-4">// INTERFACE</div>
-        <h2 class="text-3xl md:text-5xl font-bold crt-glow">SIMPLE. POWERFUL. API.</h2>
-        <p class="text-terminal-dim mt-4">One call to dispatch. One webhook for results.</p>
+  <section id="api" class="py-24 md:py-32">
+    <div class="max-w-5xl mx-auto px-6">
+      
+      <div class="text-center mb-12 reveal">
+        <span class="badge mb-4">Developer Experience</span>
+        <h2 class="text-3xl md:text-4xl font-bold">Simple, Powerful API</h2>
+        <p class="text-slate-400 mt-4 text-lg">REST endpoints. Webhook callbacks. SDKs for every language.</p>
       </div>
       
-      <!-- Code Block -->
-      <div class="terminal-window mb-12">
-        <div class="terminal-header px-4 py-3 flex items-center justify-between">
-          <div class="flex items-center gap-4">
-            <div class="flex items-center gap-2">
-              <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
-              <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
-              <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+      <div class="code-block p-6 md:p-8 reveal">
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center gap-3">
+            <div class="flex gap-1.5">
+              <span class="w-3 h-3 rounded-full bg-red-500/80"></span>
+              <span class="w-3 h-3 rounded-full bg-yellow-500/80"></span>
+              <span class="w-3 h-3 rounded-full bg-green-500/80"></span>
             </div>
-            <span class="text-xs text-terminal-dim tracking-wider">create-task.js</span>
+            <span class="text-slate-500 text-sm">dispatch-task.js</span>
           </div>
-          <button class="text-terminal-dim hover:text-terminal-green transition-colors text-xs tracking-wider">
-            [COPY]
-          </button>
+          <span class="text-xs text-slate-600">Node.js</span>
         </div>
-        <div class="p-6 overflow-x-auto">
-          <pre class="text-sm leading-loose"><code><span class="text-terminal-dim">// Dispatch a property inspection</span>
-<span class="text-amber-glow">const</span> task = <span class="text-amber-glow">await</span> fieldlayer.tasks.<span class="crt-glow-subtle">create</span>({
-  <span class="text-terminal-green">type</span>: <span class="text-amber-glow">"property_inspection"</span>,
-  <span class="text-terminal-green">location</span>: {
-    <span class="text-terminal-green">address</span>: <span class="text-amber-glow">"123 Main St, Austin, TX"</span>
+        <pre class="text-sm md:text-base overflow-x-auto"><code class="text-slate-300"><span class="text-purple-400">import</span> FieldLayer <span class="text-purple-400">from</span> <span class="text-green-400">'fieldlayer'</span>;
+
+<span class="text-purple-400">const</span> client = <span class="text-purple-400">new</span> <span class="text-blue-400">FieldLayer</span>(<span class="text-green-400">'fl_live_...'</span>);
+
+<span class="text-slate-500">// Dispatch a property inspection</span>
+<span class="text-purple-400">const</span> task = <span class="text-purple-400">await</span> client.tasks.<span class="text-blue-400">create</span>({
+  <span class="text-slate-400">type:</span> <span class="text-green-400">'property_inspection'</span>,
+  <span class="text-slate-400">location:</span> {
+    <span class="text-slate-400">address:</span> <span class="text-green-400">'123 Main St, Austin, TX 78701'</span>,
+    <span class="text-slate-400">access_notes:</span> <span class="text-green-400">'Gate code: 1234'</span>
   },
-  <span class="text-terminal-green">requirements</span>: {
-    <span class="text-terminal-green">photos</span>: [<span class="text-amber-glow">"exterior_front"</span>, <span class="text-amber-glow">"exterior_sides"</span>, <span class="text-amber-glow">"roof"</span>],
-    <span class="text-terminal-green">data</span>: [<span class="text-amber-glow">"property_condition"</span>, <span class="text-amber-glow">"occupancy_status"</span>]
+  <span class="text-slate-400">requirements:</span> {
+    <span class="text-slate-400">photos:</span> [<span class="text-green-400">'exterior'</span>, <span class="text-green-400">'roof'</span>, <span class="text-green-400">'foundation'</span>, <span class="text-green-400">'damage'</span>],
+    <span class="text-slate-400">data:</span> [<span class="text-green-400">'condition_score'</span>, <span class="text-green-400">'occupancy_status'</span>]
   },
-  <span class="text-terminal-green">deadline</span>: <span class="text-amber-glow">"4h"</span>
+  <span class="text-slate-400">sla:</span> <span class="text-green-400">'4h'</span>,
+  <span class="text-slate-400">webhook:</span> <span class="text-green-400">'https://api.yourapp.com/webhooks/fieldlayer'</span>
 });
 
-<span class="text-terminal-dim">// Webhook delivers results when complete</span>
-<span class="text-terminal-dim">// → POST https://your-app.com/webhooks/fieldlayer</span></code></pre>
+<span class="text-slate-500">// task.id → 'fl_task_abc123'</span>
+<span class="text-slate-500">// task.status → 'dispatched'</span>
+<span class="text-slate-500">// task.estimated_completion → '2024-01-15T14:30:00Z'</span></code></pre>
+      </div>
+      
+      <div class="grid md:grid-cols-3 gap-6 mt-10">
+        <div class="text-center reveal">
+          <div class="text-3xl font-bold text-gradient">REST</div>
+          <div class="text-slate-500 text-sm mt-1">Standard HTTP endpoints</div>
+        </div>
+        <div class="text-center reveal" style="transition-delay: 0.1s">
+          <div class="text-3xl font-bold text-gradient">Webhooks</div>
+          <div class="text-slate-500 text-sm mt-1">Real-time callbacks</div>
+        </div>
+        <div class="text-center reveal" style="transition-delay: 0.2s">
+          <div class="text-3xl font-bold text-gradient">SDKs</div>
+          <div class="text-slate-500 text-sm mt-1">Python, Node, Go, Ruby</div>
         </div>
       </div>
       
-      <!-- Features -->
-      <div class="grid grid-cols-3 gap-4 text-center">
-        <div class="border border-terminal-green/30 p-6 hover:border-terminal-green transition-all">
-          <div class="text-2xl mb-3">⚡</div>
-          <div class="font-bold crt-glow-subtle mb-2">FAST DISPATCH</div>
-          <div class="text-xs text-terminal-dim">Tasks assigned within minutes</div>
-        </div>
-        <div class="border border-terminal-green/30 p-6 hover:border-terminal-green transition-all">
-          <div class="text-2xl mb-3">🔗</div>
-          <div class="font-bold crt-glow-subtle mb-2">WEBHOOK RESULTS</div>
-          <div class="text-xs text-terminal-dim">Structured JSON delivered</div>
-        </div>
-        <div class="border border-terminal-green/30 p-6 hover:border-terminal-green transition-all">
-          <div class="text-2xl mb-3">📍</div>
-          <div class="font-bold crt-glow-subtle mb-2">GEOTAGGED DATA</div>
-          <div class="text-xs text-terminal-dim">Location-verified results</div>
-        </div>
-      </div>
     </div>
   </section>
 
-  <!-- Social Proof / Built for AI -->
-  <section class="py-24 md:py-32 relative bg-terminal-gray/30 border-y border-terminal-green/20">
-    <div class="max-w-4xl mx-auto px-4 md:px-8 text-center">
-      <div class="text-xs text-amber-glow tracking-widest mb-6">// INFRASTRUCTURE</div>
-      <h2 class="text-3xl md:text-4xl font-bold mb-8 crt-glow">BUILT FOR THE AI-NATIVE ERA</h2>
-      <p class="text-lg text-terminal-dim max-w-2xl mx-auto mb-12">
-        We're building the infrastructure that lets AI agents interact with the physical world. 
-        <span class="crt-glow-subtle">The missing layer between silicon and steel.</span>
-      </p>
-      
-      <!-- Stats -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
-        <div class="border border-terminal-green/20 p-4">
-          <div class="text-2xl md:text-3xl font-bold crt-glow">47K+</div>
-          <div class="text-xs text-terminal-dim tracking-wider mt-2">WORKERS</div>
-        </div>
-        <div class="border border-terminal-green/20 p-4">
-          <div class="text-2xl md:text-3xl font-bold crt-glow">50</div>
-          <div class="text-xs text-terminal-dim tracking-wider mt-2">US STATES</div>
-        </div>
-        <div class="border border-terminal-green/20 p-4">
-          <div class="text-2xl md:text-3xl font-bold crt-glow">&lt;4h</div>
-          <div class="text-xs text-terminal-dim tracking-wider mt-2">AVG COMPLETION</div>
-        </div>
-        <div class="border border-terminal-green/20 p-4">
-          <div class="text-2xl md:text-3xl font-bold crt-glow">99.2%</div>
-          <div class="text-xs text-terminal-dim tracking-wider mt-2">SUCCESS RATE</div>
-        </div>
+  <!-- Social Proof -->
+  <section class="py-16 border-y border-slate-800/50">
+    <div class="max-w-6xl mx-auto px-6">
+      <p class="text-center text-slate-500 text-sm mb-8">Trusted by AI-native companies</p>
+      <div class="flex flex-wrap justify-center items-center gap-12 opacity-40">
+        <span class="text-2xl font-bold text-slate-400">Arvor</span>
+        <span class="text-2xl font-bold text-slate-400">Planck</span>
+        <span class="text-2xl font-bold text-slate-400">Tractable</span>
+        <span class="text-2xl font-bold text-slate-400">Lemonade</span>
       </div>
     </div>
   </section>
 
   <!-- CTA Section -->
-  <section class="py-24 md:py-32 relative">
-    <div class="max-w-3xl mx-auto px-4 md:px-8">
-      <div class="terminal-window">
-        <div class="terminal-header px-4 py-3 flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
-            <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
-            <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
-          </div>
-          <span class="text-xs text-terminal-dim tracking-wider">access_request.sh</span>
-          <span class="status-dot"></span>
-        </div>
-        <div class="p-8 md:p-12 text-center">
-          <div class="text-terminal-dim text-sm mb-6">$ fieldlayer access --request</div>
-          
-          <h2 class="text-2xl md:text-4xl font-bold mb-6 crt-glow">
-            READY TO GIVE YOUR<br>AGENTS HANDS?
-          </h2>
-          
-          <p class="text-terminal-dim mb-8 max-w-md mx-auto">
-            Join the waitlist and be first to access the Physical Task API.
-          </p>
-          
-          <form class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-            <div class="relative flex-1">
-              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-terminal-dim">&gt;</span>
-              <input 
-                type="email" 
-                placeholder="you@company.com" 
-                class="w-full pl-8 pr-4 py-4 bg-terminal-black border-2 border-terminal-green text-terminal-green placeholder-terminal-dim focus:outline-none focus:shadow-[0_0_20px_rgba(0,255,65,0.3)] transition-all font-mono"
-              >
-            </div>
-            <button 
-              type="submit" 
-              class="px-8 py-4 bg-terminal-green text-terminal-black font-bold tracking-wider hover:bg-terminal-dim transition-all crt-box-glow whitespace-nowrap"
-            >
-              GET ACCESS →
-            </button>
-          </form>
-          
-          <div class="mt-8 text-xs text-terminal-dim">
-            <span class="text-terminal-green">■</span> Processing requests within 24-48 hours
-          </div>
-        </div>
-      </div>
+  <section id="waitlist" class="py-24 md:py-32">
+    <div class="max-w-2xl mx-auto px-6 text-center reveal">
+      
+      <h2 class="text-3xl md:text-4xl font-bold">
+        Get Early Access
+      </h2>
+      <p class="text-slate-400 text-lg mt-4 mb-10">
+        We're onboarding design partners now. Join the waitlist for priority access and white-glove onboarding.
+      </p>
+      
+      <form class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+        <input 
+          type="email" 
+          placeholder="you@company.com" 
+          class="flex-1"
+          required
+        >
+        <button type="submit" class="btn-primary whitespace-nowrap">
+          Join Waitlist
+        </button>
+      </form>
+      
+      <p class="text-slate-500 text-sm mt-8">
+        Building AI agents for insurance, real estate, or logistics?
+        <a href="mailto:founders@fieldlayer.io" class="text-brand-400 hover:underline">Let's talk →</a>
+      </p>
+      
     </div>
   </section>
 
   <!-- Footer -->
-  <footer class="py-12 border-t border-terminal-green/20">
-    <div class="max-w-7xl mx-auto px-4 md:px-8">
-      <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-        <div class="flex items-center gap-3">
-          <span class="text-xl crt-glow">⚡</span>
-          <span class="font-bold tracking-wider crt-glow-subtle">FIELDLAYER</span>
+  <footer class="py-12 border-t border-slate-800/50">
+    <div class="max-w-6xl mx-auto px-6">
+      
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+        
+        <div>
+          <div class="font-bold text-xl text-gradient">FieldLayer</div>
+          <p class="text-slate-500 text-sm mt-1">Physical infrastructure for AI agents.</p>
         </div>
         
-        <div class="flex items-center gap-6 text-sm text-terminal-dim">
-          <a href="#" class="hover:text-terminal-green transition-colors">[DOCS]</a>
-          <a href="#" class="hover:text-terminal-green transition-colors">[API]</a>
-          <a href="#" class="hover:text-terminal-green transition-colors">[PRICING]</a>
-          <a href="#" class="hover:text-terminal-green transition-colors">[CONTACT]</a>
+        <div class="flex flex-wrap gap-8 text-sm text-slate-400">
+          <a href="#" class="hover:text-white transition-colors">Documentation</a>
+          <a href="#" class="hover:text-white transition-colors">API Reference</a>
+          <a href="#" class="hover:text-white transition-colors">Pricing</a>
+          <a href="mailto:founders@fieldlayer.io" class="hover:text-white transition-colors">Contact</a>
         </div>
         
-        <div class="text-xs text-terminal-dim tracking-wider">
-          © 2025 FIELDLAYER
-        </div>
       </div>
       
-      <div class="text-center mt-8 text-xs text-terminal-dim/60">
-        Made for AI agents, by humans <span class="text-terminal-dim">(for now)</span>
+      <div class="divider my-8"></div>
+      
+      <div class="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500">
+        <span>© 2026 FieldLayer, Inc. All rights reserved.</span>
+        <span>Made for AI agents, by humans (for now).</span>
       </div>
       
-      <div class="text-center mt-4 text-terminal-dim/30 text-xs tracking-widest">
-        ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-      </div>
     </div>
   </footer>
 
-  <!-- Scripts -->
   <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+    
+    // Scroll reveal animations
+    const reveals = document.querySelectorAll('.reveal');
+    
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+    
+    reveals.forEach(el => revealObserver.observe(el));
+    
     // Smooth scroll for anchor links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-      anchor.addEventListener('click', function (e) {
+      anchor.addEventListener('click', function(e) {
         e.preventDefault();
         const target = document.querySelector(this.getAttribute('href'));
         if (target) {
-          target.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-          });
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       });
     });
-    
-    // Intersection Observer for fade-in animations
-    const observerOptions = {
-      root: null,
-      rootMargin: '0px',
-      threshold: 0.1
-    };
-    
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.style.opacity = '1';
-          entry.target.style.transform = 'translateY(0)';
-        }
-      });
-    }, observerOptions);
-    
-    // Apply to sections
-    document.querySelectorAll('section').forEach((section, index) => {
-      if (index > 0) { // Skip hero
-        section.style.opacity = '0';
-        section.style.transform = 'translateY(20px)';
-        section.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-        observer.observe(section);
-      }
-    });
-    
-    // Copy code button
-    document.querySelectorAll('button').forEach(btn => {
-      if (btn.textContent.includes('COPY')) {
-        btn.addEventListener('click', () => {
-          const code = btn.closest('.terminal-window').querySelector('code').textContent;
-          navigator.clipboard.writeText(code);
-          btn.textContent = '[COPIED]';
-          setTimeout(() => btn.textContent = '[COPY]', 2000);
-        });
-      }
-    });
-    
-    // Add subtle flicker to CRT elements
-    const flickerElements = document.querySelectorAll('.crt-glow, .crt-glow-subtle');
-    setInterval(() => {
-      flickerElements.forEach(el => {
-        el.style.opacity = 0.97 + Math.random() * 0.03;
-      });
-    }, 100);
   </script>
+
 </body>
 </html>
