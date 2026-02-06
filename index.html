@@ -1,520 +1,554 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FieldLayer — The Physical Layer for AI Agents</title>
-  <meta name="description" content="One API to dispatch humans for real-world tasks. Inspections, photos, deliveries — your AI agent calls the shots.">
+  <title>FieldLayer — Physical Infrastructure for AI</title>
+  <meta name="description" content="One API to dispatch humans for real-world tasks. Your AI agent calls the shots.">
   
-  <!-- Favicon -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23000' width='100' height='100'/><text y='.78em' x='10' font-size='70' fill='%23EAFF00'>FL</text></svg>">
   
-  <!-- Fonts -->
+  <!-- Fonts: Distinctive choices -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
           fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
+            display: ['Syne', 'sans-serif'],
+            mono: ['IBM Plex Mono', 'monospace'],
           },
           colors: {
-            field: {
-              50: 'oklch(0.97 0.01 250)',
-              100: 'oklch(0.93 0.02 250)',
-              200: 'oklch(0.85 0.04 250)',
-              300: 'oklch(0.75 0.08 250)',
-              400: 'oklch(0.65 0.12 250)',
-              500: 'oklch(0.55 0.16 250)',
-              600: 'oklch(0.50 0.18 250)',
-              700: 'oklch(0.40 0.14 250)',
-              800: 'oklch(0.30 0.10 250)',
-              900: 'oklch(0.20 0.06 250)',
-              950: 'oklch(0.12 0.04 250)',
-            },
-            accent: {
-              DEFAULT: 'oklch(0.75 0.18 160)',
-              hover: 'oklch(0.70 0.20 160)',
-            }
-          },
-          animation: {
-            'fade-in': 'fadeIn 0.6s ease-out forwards',
-            'fade-in-up': 'fadeInUp 0.6s ease-out forwards',
-            'pulse-slow': 'pulse 3s infinite',
-          },
-          keyframes: {
-            fadeIn: {
-              '0%': { opacity: '0' },
-              '100%': { opacity: '1' },
-            },
-            fadeInUp: {
-              '0%': { opacity: '0', transform: 'translateY(20px)' },
-              '100%': { opacity: '1', transform: 'translateY(0)' },
-            },
+            volt: '#EAFF00',
+            coal: '#0A0A0A',
+            smoke: '#1A1A1A',
+            ash: '#2A2A2A',
+            silver: '#888888',
+            chalk: '#E5E5E5',
           },
         },
       },
     }
   </script>
   
-  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   
   <style>
-    .gradient-text {
-      background: linear-gradient(135deg, oklch(0.85 0.15 160), oklch(0.75 0.18 200));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    * { box-sizing: border-box; }
+    
+    html { scroll-behavior: smooth; }
+    
+    body {
+      font-family: 'IBM Plex Mono', monospace;
+      background: #0A0A0A;
+      color: #E5E5E5;
+      overflow-x: hidden;
     }
     
-    .gradient-border {
-      position: relative;
-      background: oklch(0.14 0.02 250);
-      border-radius: 1rem;
-    }
-    
-    .gradient-border::before {
+    /* Noise texture overlay */
+    body::before {
       content: '';
-      position: absolute;
+      position: fixed;
       inset: 0;
-      border-radius: 1rem;
-      padding: 1px;
-      background: linear-gradient(135deg, oklch(0.5 0.15 160 / 0.5), oklch(0.4 0.1 250 / 0.3));
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      opacity: 0.03;
       pointer-events: none;
+      z-index: 1000;
     }
     
-    .code-block {
-      background: linear-gradient(180deg, oklch(0.16 0.02 250) 0%, oklch(0.12 0.02 250) 100%);
+    .font-display { font-family: 'Syne', sans-serif; }
+    
+    /* Brutalist button */
+    .btn-brutal {
+      background: #EAFF00;
+      color: #0A0A0A;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 1rem 2rem;
+      border: 3px solid #EAFF00;
+      position: relative;
+      transition: all 0.15s ease;
     }
     
-    .glow {
-      box-shadow: 0 0 60px oklch(0.6 0.15 160 / 0.15);
+    .btn-brutal:hover {
+      background: transparent;
+      color: #EAFF00;
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0 #EAFF00;
     }
     
-    .animate-on-scroll {
+    .btn-outline {
+      background: transparent;
+      color: #E5E5E5;
+      font-family: 'IBM Plex Mono', monospace;
+      font-weight: 500;
+      padding: 1rem 2rem;
+      border: 2px solid #2A2A2A;
+      transition: all 0.15s ease;
+    }
+    
+    .btn-outline:hover {
+      border-color: #EAFF00;
+      color: #EAFF00;
+    }
+    
+    /* Section divider */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #2A2A2A 20%, #2A2A2A 80%, transparent);
+    }
+    
+    /* Marker highlight */
+    .marker {
+      background: linear-gradient(180deg, transparent 60%, #EAFF00 60%);
+      padding: 0 0.25em;
+    }
+    
+    /* Grid pattern */
+    .grid-pattern {
+      background-image: 
+        linear-gradient(#1A1A1A 1px, transparent 1px),
+        linear-gradient(90deg, #1A1A1A 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+    
+    /* Diagonal stripes for accent areas */
+    .stripes {
+      background: repeating-linear-gradient(
+        -45deg,
+        #EAFF00,
+        #EAFF00 2px,
+        #0A0A0A 2px,
+        #0A0A0A 12px
+      );
+    }
+    
+    /* Code block styling */
+    .code-brutal {
+      background: #1A1A1A;
+      border: 2px solid #2A2A2A;
+      border-left: 4px solid #EAFF00;
+    }
+    
+    /* Card styling */
+    .card-brutal {
+      background: #1A1A1A;
+      border: 2px solid #2A2A2A;
+      transition: all 0.2s ease;
+    }
+    
+    .card-brutal:hover {
+      border-color: #EAFF00;
+      transform: translate(-3px, -3px);
+      box-shadow: 6px 6px 0 #2A2A2A;
+    }
+    
+    /* Number badges */
+    .num-badge {
+      width: 48px;
+      height: 48px;
+      background: #EAFF00;
+      color: #0A0A0A;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    /* Scroll animations */
+    .reveal {
       opacity: 0;
-      transform: translateY(20px);
-      transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+      transform: translateY(30px);
+      transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
     }
     
-    .animate-on-scroll.visible {
+    .reveal.visible {
       opacity: 1;
       transform: translateY(0);
     }
     
-    /* Stagger animations */
-    .stagger-1 { transition-delay: 0.1s; }
-    .stagger-2 { transition-delay: 0.2s; }
-    .stagger-3 { transition-delay: 0.3s; }
-    .stagger-4 { transition-delay: 0.4s; }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #0A0A0A; }
+    ::-webkit-scrollbar-thumb { background: #2A2A2A; }
+    ::-webkit-scrollbar-thumb:hover { background: #EAFF00; }
   </style>
 </head>
 
-<body class="bg-field-950 text-white font-sans antialiased">
+<body class="antialiased">
   
   <!-- Navigation -->
-  <nav class="fixed top-0 left-0 right-0 z-50 bg-field-950/80 backdrop-blur-xl border-b border-white/5">
-    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-      <a href="#" class="flex items-center gap-2 text-xl font-semibold">
-        <span class="text-2xl">⚡</span>
-        <span>FieldLayer</span>
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-coal/90 backdrop-blur-sm border-b-2 border-ash">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <a href="#" class="font-display font-bold text-xl tracking-tight flex items-center gap-2">
+        <span class="bg-volt text-coal px-2 py-1">FL</span>
+        <span class="text-chalk">FieldLayer</span>
       </a>
-      <div class="hidden md:flex items-center gap-8 text-sm text-field-300">
-        <a href="#how-it-works" class="hover:text-white transition-colors duration-200">How it Works</a>
-        <a href="#use-cases" class="hover:text-white transition-colors duration-200">Use Cases</a>
-        <a href="#api" class="hover:text-white transition-colors duration-200">API</a>
-        <a href="#" class="px-4 py-2 bg-white/10 hover:bg-white/15 rounded-lg transition-all duration-200">Docs</a>
+      <div class="hidden md:flex items-center gap-8 text-sm text-silver">
+        <a href="#how-it-works" class="hover:text-volt transition-colors">How it Works</a>
+        <a href="#use-cases" class="hover:text-volt transition-colors">Use Cases</a>
+        <a href="#api" class="hover:text-volt transition-colors">API</a>
+        <a href="#waitlist" class="btn-brutal text-sm py-2 px-4">Join Waitlist</a>
       </div>
-      <button class="md:hidden text-field-300 hover:text-white">
-        <i data-lucide="menu" class="w-6 h-6"></i>
-      </button>
     </div>
   </nav>
 
   <!-- Hero Section -->
-  <section class="min-h-screen flex items-center justify-center relative overflow-hidden pt-20">
-    <!-- Background gradient -->
-    <div class="absolute inset-0 bg-gradient-to-b from-field-900/50 via-field-950 to-field-950"></div>
-    <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-accent/5 rounded-full blur-3xl"></div>
-    
-    <div class="relative z-10 max-w-4xl mx-auto px-6 text-center">
-      <div class="animate-fade-in-up">
-        <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full text-sm text-field-300 mb-8 border border-white/10">
-          <span class="w-2 h-2 bg-accent rounded-full animate-pulse-slow"></span>
-          Now in private beta
+  <header class="min-h-screen flex items-center pt-16 grid-pattern">
+    <div class="max-w-7xl mx-auto px-6 py-24 grid lg:grid-cols-2 gap-16 items-center">
+      
+      <div class="space-y-8">
+        <div class="inline-block">
+          <span class="stripes text-coal text-xs font-bold uppercase tracking-widest px-4 py-2">
+            &nbsp; Now in Private Beta &nbsp;
+          </span>
         </div>
         
-        <h1 class="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-[1.1]">
-          The Physical Layer<br>
-          <span class="gradient-text">for AI Agents</span>
+        <h1 class="font-display font-800 text-5xl md:text-7xl leading-[0.95] tracking-tight">
+          The <span class="marker">Physical</span> Layer<br>for AI Agents
         </h1>
         
-        <p class="text-xl md:text-2xl text-field-300 mb-10 max-w-2xl mx-auto leading-relaxed">
-          One API to dispatch humans for real-world tasks. Inspections, photos, deliveries — your AI agent calls the shots.
+        <p class="text-xl text-silver max-w-lg leading-relaxed">
+          One API to dispatch humans for real-world tasks.<br>
+          <span class="text-chalk">Inspections. Photos. Verification.</span><br>
+          Your AI agent calls the shots.
         </p>
         
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <form class="flex items-center gap-2 w-full sm:w-auto">
-            <input 
-              type="email" 
-              placeholder="you@company.com" 
-              class="px-5 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-field-400 focus:outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/20 transition-all duration-200 w-full sm:w-72"
-            >
-            <button 
-              type="submit" 
-              class="px-6 py-3.5 bg-accent hover:bg-accent-hover text-field-950 font-semibold rounded-xl transition-all duration-200 whitespace-nowrap flex items-center gap-2 glow"
-            >
-              Join Waitlist
-              <i data-lucide="arrow-right" class="w-4 h-4"></i>
-            </button>
-          </form>
+        <div class="flex flex-wrap gap-4 pt-4">
+          <a href="#waitlist" class="btn-brutal">Get Early Access</a>
+          <a href="#api" class="btn-outline">View API →</a>
         </div>
         
-        <div class="mt-6">
-          <a href="#api" class="text-field-400 hover:text-white text-sm inline-flex items-center gap-1 transition-colors duration-200">
-            <i data-lucide="code-2" class="w-4 h-4"></i>
-            View API Docs
-          </a>
+        <div class="flex items-center gap-6 pt-8 text-sm text-silver">
+          <div class="flex items-center gap-2">
+            <i data-lucide="zap" class="w-4 h-4 text-volt"></i>
+            <span>&lt;4hr SLA</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <i data-lucide="map-pin" class="w-4 h-4 text-volt"></i>
+            <span>50 States</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <i data-lucide="shield-check" class="w-4 h-4 text-volt"></i>
+            <span>Verified Workers</span>
+          </div>
         </div>
       </div>
+      
+      <div class="hidden lg:block">
+        <div class="code-brutal p-6 text-sm">
+          <div class="flex items-center gap-2 mb-4 text-silver text-xs">
+            <span class="w-3 h-3 rounded-full bg-volt/50"></span>
+            <span>api-request.js</span>
+          </div>
+          <pre class="text-chalk overflow-x-auto"><code><span class="text-silver">// Your AI agent needs eyes on the ground</span>
+<span class="text-volt">const</span> task = <span class="text-volt">await</span> fieldlayer.dispatch({
+
+  <span class="text-silver">type:</span> <span class="text-green-400">"property_inspection"</span>,
+  
+  <span class="text-silver">location:</span> {
+    address: <span class="text-green-400">"1247 Oak Street, Austin TX"</span>
+  },
+  
+  <span class="text-silver">requirements:</span> {
+    photos: [<span class="text-green-400">"exterior"</span>, <span class="text-green-400">"roof"</span>, <span class="text-green-400">"damage"</span>],
+    data: [<span class="text-green-400">"condition_score"</span>, <span class="text-green-400">"occupancy"</span>]
+  },
+  
+  <span class="text-silver">deadline:</span> <span class="text-green-400">"4h"</span>
+
+});
+
+<span class="text-silver">// → Results delivered via webhook</span></code></pre>
+        </div>
+      </div>
+      
     </div>
-    
-    <!-- Scroll indicator -->
-    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-      <i data-lucide="chevron-down" class="w-6 h-6 text-field-500"></i>
-    </div>
-  </section>
+  </header>
 
   <!-- Problem Section -->
-  <section class="py-32 relative">
-    <div class="max-w-4xl mx-auto px-6">
-      <div class="animate-on-scroll text-center">
-        <p class="text-2xl md:text-3xl text-field-200 leading-relaxed mb-8">
-          AI agents can browse the web, write code, and analyze data.
-          <span class="text-field-400">But when they need something in the physical world?</span>
-        </p>
-        <p class="text-3xl md:text-4xl font-semibold text-field-100 mb-4">
-          They're stuck.
-        </p>
-        <div class="w-24 h-1 bg-gradient-to-r from-transparent via-accent to-transparent mx-auto my-10"></div>
-        <p class="text-2xl md:text-3xl font-semibold gradient-text">
-          No more. FieldLayer bridges the gap.
-        </p>
-      </div>
+  <section class="py-32 border-t-2 border-ash">
+    <div class="max-w-4xl mx-auto px-6 text-center reveal">
+      <p class="font-display text-3xl md:text-4xl leading-snug">
+        AI agents can <span class="text-volt">browse the web</span>, 
+        <span class="text-volt">write code</span>, and 
+        <span class="text-volt">analyze data</span>.
+      </p>
+      <p class="font-display text-3xl md:text-4xl leading-snug mt-6 text-silver">
+        But when they need something in the physical world?
+      </p>
+      <p class="font-display text-5xl md:text-6xl font-800 mt-8">
+        They're <span class="line-through text-silver">stuck</span> <span class="text-volt">not anymore.</span>
+      </p>
     </div>
   </section>
 
-  <!-- How It Works -->
-  <section id="how-it-works" class="py-32 relative">
-    <div class="max-w-6xl mx-auto px-6">
-      <div class="animate-on-scroll text-center mb-20">
-        <h2 class="text-4xl md:text-5xl font-bold mb-4">How It Works</h2>
-        <p class="text-field-400 text-lg">Three steps. That's it.</p>
+  <!-- How it Works -->
+  <section id="how-it-works" class="py-32 bg-smoke border-y-2 border-ash">
+    <div class="max-w-7xl mx-auto px-6">
+      
+      <div class="text-center mb-20 reveal">
+        <h2 class="font-display font-800 text-4xl md:text-5xl">How It Works</h2>
+        <p class="text-silver mt-4 text-lg">Three steps. Zero complexity.</p>
       </div>
       
       <div class="grid md:grid-cols-3 gap-8">
-        <!-- Step 1 -->
-        <div class="animate-on-scroll stagger-1 gradient-border p-8">
-          <div class="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center mb-6">
-            <i data-lucide="terminal" class="w-6 h-6 text-accent"></i>
-          </div>
-          <div class="text-sm text-accent font-medium mb-2">Step 1</div>
-          <h3 class="text-xl font-semibold mb-3">Your Agent Calls the API</h3>
-          <p class="text-field-400 leading-relaxed">
-            Simple REST call with task details — location, requirements, deadline. That's all your agent needs.
+        
+        <div class="card-brutal p-8 reveal" style="transition-delay: 0.1s">
+          <div class="num-badge mb-6">01</div>
+          <h3 class="font-display font-700 text-xl mb-3">Agent Calls API</h3>
+          <p class="text-silver leading-relaxed">
+            Your AI agent makes a simple REST call. Location, requirements, deadline. That's it.
           </p>
         </div>
         
-        <!-- Step 2 -->
-        <div class="animate-on-scroll stagger-2 gradient-border p-8">
-          <div class="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center mb-6">
-            <i data-lucide="users" class="w-6 h-6 text-accent"></i>
-          </div>
-          <div class="text-sm text-accent font-medium mb-2">Step 2</div>
-          <h3 class="text-xl font-semibold mb-3">We Dispatch a Human</h3>
-          <p class="text-field-400 leading-relaxed">
-            Our network of verified workers accepts the task. Background-checked, trained, ready to go.
+        <div class="card-brutal p-8 reveal" style="transition-delay: 0.2s">
+          <div class="num-badge mb-6">02</div>
+          <h3 class="font-display font-700 text-xl mb-3">We Dispatch</h3>
+          <p class="text-silver leading-relaxed">
+            Our network of verified workers accepts the task. Background-checked. Quality-assured.
           </p>
         </div>
         
-        <!-- Step 3 -->
-        <div class="animate-on-scroll stagger-3 gradient-border p-8">
-          <div class="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center mb-6">
-            <i data-lucide="check-circle" class="w-6 h-6 text-accent"></i>
-          </div>
-          <div class="text-sm text-accent font-medium mb-2">Step 3</div>
-          <h3 class="text-xl font-semibold mb-3">Results Delivered</h3>
-          <p class="text-field-400 leading-relaxed">
-            Structured data, geotagged photos, and verification — delivered via webhook, ready for your agent.
+        <div class="card-brutal p-8 reveal" style="transition-delay: 0.3s">
+          <div class="num-badge mb-6">03</div>
+          <h3 class="font-display font-700 text-xl mb-3">Results Delivered</h3>
+          <p class="text-silver leading-relaxed">
+            Structured data. Geotagged photos. Verification metadata. Webhook to your agent.
           </p>
         </div>
+        
       </div>
     </div>
   </section>
 
   <!-- Use Cases -->
-  <section id="use-cases" class="py-32 relative bg-field-900/30">
-    <div class="max-w-6xl mx-auto px-6">
-      <div class="animate-on-scroll text-center mb-20">
-        <h2 class="text-4xl md:text-5xl font-bold mb-4">Built for Any Industry</h2>
-        <p class="text-field-400 text-lg">Real-world tasks your agents can finally complete.</p>
+  <section id="use-cases" class="py-32">
+    <div class="max-w-7xl mx-auto px-6">
+      
+      <div class="mb-20 reveal">
+        <h2 class="font-display font-800 text-4xl md:text-5xl">Built For</h2>
+        <p class="text-silver mt-4 text-lg">Industries where AI meets the physical world</p>
       </div>
       
       <div class="grid md:grid-cols-2 gap-6">
-        <!-- Insurance -->
-        <div class="animate-on-scroll stagger-1 group p-8 rounded-2xl bg-field-950/50 border border-white/5 hover:border-accent/30 transition-all duration-300">
+        
+        <div class="card-brutal p-8 reveal">
           <div class="flex items-start gap-4">
-            <div class="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
-              <i data-lucide="shield-check" class="w-6 h-6 text-blue-400"></i>
+            <div class="w-12 h-12 bg-volt/10 border-2 border-volt flex items-center justify-center shrink-0">
+              <i data-lucide="shield" class="w-6 h-6 text-volt"></i>
             </div>
             <div>
-              <h3 class="text-xl font-semibold mb-2">Insurance</h3>
-              <p class="text-field-400 leading-relaxed">
-                Property inspections, claims verification, fraud detection. Get eyes on the ground in hours, not days.
-              </p>
+              <h3 class="font-display font-700 text-xl mb-2">Insurance</h3>
+              <p class="text-silver">Property inspections. Claims verification. Pre-bind assessments. Fraud detection through physical evidence.</p>
             </div>
           </div>
         </div>
         
-        <!-- Real Estate -->
-        <div class="animate-on-scroll stagger-2 group p-8 rounded-2xl bg-field-950/50 border border-white/5 hover:border-accent/30 transition-all duration-300">
+        <div class="card-brutal p-8 reveal" style="transition-delay: 0.1s">
           <div class="flex items-start gap-4">
-            <div class="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
-              <i data-lucide="home" class="w-6 h-6 text-emerald-400"></i>
+            <div class="w-12 h-12 bg-volt/10 border-2 border-volt flex items-center justify-center shrink-0">
+              <i data-lucide="home" class="w-6 h-6 text-volt"></i>
             </div>
             <div>
-              <h3 class="text-xl font-semibold mb-2">Real Estate</h3>
-              <p class="text-field-400 leading-relaxed">
-                MLS photography, move-in/out inspections, property condition reports. Scale your operations instantly.
-              </p>
+              <h3 class="font-display font-700 text-xl mb-2">Real Estate</h3>
+              <p class="text-silver">MLS photography. Move-in/out inspections. Property condition reports. Listing verification.</p>
             </div>
           </div>
         </div>
         
-        <!-- Retail -->
-        <div class="animate-on-scroll stagger-3 group p-8 rounded-2xl bg-field-950/50 border border-white/5 hover:border-accent/30 transition-all duration-300">
+        <div class="card-brutal p-8 reveal" style="transition-delay: 0.2s">
           <div class="flex items-start gap-4">
-            <div class="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
-              <i data-lucide="store" class="w-6 h-6 text-purple-400"></i>
+            <div class="w-12 h-12 bg-volt/10 border-2 border-volt flex items-center justify-center shrink-0">
+              <i data-lucide="shopping-cart" class="w-6 h-6 text-volt"></i>
             </div>
             <div>
-              <h3 class="text-xl font-semibold mb-2">Retail</h3>
-              <p class="text-field-400 leading-relaxed">
-                Shelf audits, planogram compliance, competitor intelligence. Real-time visibility into any store.
-              </p>
+              <h3 class="font-display font-700 text-xl mb-2">Retail</h3>
+              <p class="text-silver">Shelf audits. Planogram compliance. Competitor intelligence. Mystery shopping at scale.</p>
             </div>
           </div>
         </div>
         
-        <!-- Logistics -->
-        <div class="animate-on-scroll stagger-4 group p-8 rounded-2xl bg-field-950/50 border border-white/5 hover:border-accent/30 transition-all duration-300">
+        <div class="card-brutal p-8 reveal" style="transition-delay: 0.3s">
           <div class="flex items-start gap-4">
-            <div class="w-12 h-12 bg-orange-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
-              <i data-lucide="truck" class="w-6 h-6 text-orange-400"></i>
+            <div class="w-12 h-12 bg-volt/10 border-2 border-volt flex items-center justify-center shrink-0">
+              <i data-lucide="truck" class="w-6 h-6 text-volt"></i>
             </div>
             <div>
-              <h3 class="text-xl font-semibold mb-2">Logistics</h3>
-              <p class="text-field-400 leading-relaxed">
-                Proof of delivery, package verification, condition inspection. Close the loop on last-mile.
-              </p>
+              <h3 class="font-display font-700 text-xl mb-2">Logistics</h3>
+              <p class="text-silver">Proof of delivery. Package verification. Condition inspection. Last-mile confirmation.</p>
             </div>
           </div>
         </div>
+        
       </div>
     </div>
   </section>
 
   <!-- API Section -->
-  <section id="api" class="py-32 relative">
+  <section id="api" class="py-32 bg-smoke border-y-2 border-ash">
     <div class="max-w-5xl mx-auto px-6">
-      <div class="animate-on-scroll text-center mb-16">
-        <h2 class="text-4xl md:text-5xl font-bold mb-4">Simple, Powerful API</h2>
-        <p class="text-field-400 text-lg">One call to dispatch. One webhook for results.</p>
+      
+      <div class="text-center mb-16 reveal">
+        <h2 class="font-display font-800 text-4xl md:text-5xl">Simple API</h2>
+        <p class="text-silver mt-4 text-lg">REST endpoints. Webhook callbacks. That's the whole interface.</p>
       </div>
       
-      <div class="animate-on-scroll">
-        <div class="code-block rounded-2xl overflow-hidden border border-white/5">
-          <!-- Code header -->
-          <div class="flex items-center justify-between px-6 py-4 border-b border-white/5">
-            <div class="flex items-center gap-3">
-              <div class="flex gap-2">
-                <div class="w-3 h-3 rounded-full bg-red-500/60"></div>
-                <div class="w-3 h-3 rounded-full bg-yellow-500/60"></div>
-                <div class="w-3 h-3 rounded-full bg-green-500/60"></div>
-              </div>
-              <span class="text-sm text-field-500 font-mono">create-task.js</span>
-            </div>
-            <button class="text-field-500 hover:text-white transition-colors">
-              <i data-lucide="copy" class="w-4 h-4"></i>
-            </button>
+      <div class="code-brutal p-8 reveal">
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center gap-2 text-silver text-xs">
+            <span class="w-3 h-3 rounded-full bg-volt"></span>
+            <span>POST /v1/tasks</span>
           </div>
-          
-          <!-- Code content -->
-          <div class="p-6 overflow-x-auto">
-            <pre class="text-sm leading-relaxed font-mono"><code><span class="text-purple-400">const</span> <span class="text-field-200">task</span> <span class="text-field-500">=</span> <span class="text-purple-400">await</span> <span class="text-field-200">fieldlayer</span><span class="text-field-500">.</span><span class="text-field-200">tasks</span><span class="text-field-500">.</span><span class="text-blue-400">create</span><span class="text-field-500">({</span>
-  <span class="text-emerald-400">type</span><span class="text-field-500">:</span> <span class="text-amber-300">"property_inspection"</span><span class="text-field-500">,</span>
-  <span class="text-emerald-400">location</span><span class="text-field-500">:</span> <span class="text-field-500">{</span>
-    <span class="text-emerald-400">address</span><span class="text-field-500">:</span> <span class="text-amber-300">"123 Main St, Austin, TX"</span>
-  <span class="text-field-500">},</span>
-  <span class="text-emerald-400">requirements</span><span class="text-field-500">:</span> <span class="text-field-500">{</span>
-    <span class="text-emerald-400">photos</span><span class="text-field-500">:</span> <span class="text-field-500">[</span><span class="text-amber-300">"exterior_front"</span><span class="text-field-500">,</span> <span class="text-amber-300">"exterior_sides"</span><span class="text-field-500">,</span> <span class="text-amber-300">"roof"</span><span class="text-field-500">],</span>
-    <span class="text-emerald-400">data</span><span class="text-field-500">:</span> <span class="text-field-500">[</span><span class="text-amber-300">"property_condition"</span><span class="text-field-500">,</span> <span class="text-amber-300">"occupancy_status"</span><span class="text-field-500">]</span>
-  <span class="text-field-500">},</span>
-  <span class="text-emerald-400">deadline</span><span class="text-field-500">:</span> <span class="text-amber-300">"4h"</span>
-<span class="text-field-500">});</span>
+          <span class="text-xs text-silver">Node.js</span>
+        </div>
+        <pre class="text-sm md:text-base text-chalk overflow-x-auto"><code><span class="text-volt">import</span> FieldLayer <span class="text-volt">from</span> <span class="text-green-400">'fieldlayer'</span>;
 
-<span class="text-field-600">// Webhook delivers results when complete</span></code></pre>
-          </div>
+<span class="text-volt">const</span> fl = <span class="text-volt">new</span> FieldLayer(<span class="text-green-400">'fl_live_...'</span>);
+
+<span class="text-silver">// Dispatch a human for a property inspection</span>
+<span class="text-volt">const</span> task = <span class="text-volt">await</span> fl.tasks.create({
+  type: <span class="text-green-400">'property_inspection'</span>,
+  location: {
+    address: <span class="text-green-400">'123 Main St, Austin, TX 78701'</span>,
+    access_instructions: <span class="text-green-400">'Gate code: 1234'</span>
+  },
+  requirements: {
+    photos: [
+      { angle: <span class="text-green-400">'exterior_front'</span>, required: <span class="text-volt">true</span> },
+      { angle: <span class="text-green-400">'exterior_sides'</span>, required: <span class="text-volt">true</span> },
+      { angle: <span class="text-green-400">'roof'</span>, required: <span class="text-volt">true</span> },
+      { angle: <span class="text-green-400">'damage_closeup'</span>, required: <span class="text-volt">false</span> }
+    ],
+    structured_data: [<span class="text-green-400">'property_condition'</span>, <span class="text-green-400">'occupancy_status'</span>]
+  },
+  sla: <span class="text-green-400">'4h'</span>,
+  webhook_url: <span class="text-green-400">'https://your-api.com/fieldlayer/webhook'</span>
+});
+
+console.log(task.id); <span class="text-silver">// fl_task_abc123</span>
+console.log(task.status); <span class="text-silver">// 'dispatched'</span>
+console.log(task.eta); <span class="text-silver">// '2024-01-15T14:30:00Z'</span></code></pre>
+      </div>
+      
+      <div class="grid md:grid-cols-3 gap-6 mt-8">
+        <div class="text-center p-6 reveal">
+          <div class="text-volt font-display font-800 text-3xl">REST</div>
+          <div class="text-silver text-sm mt-1">Standard HTTP endpoints</div>
+        </div>
+        <div class="text-center p-6 reveal" style="transition-delay: 0.1s">
+          <div class="text-volt font-display font-800 text-3xl">Webhooks</div>
+          <div class="text-silver text-sm mt-1">Real-time status updates</div>
+        </div>
+        <div class="text-center p-6 reveal" style="transition-delay: 0.2s">
+          <div class="text-volt font-display font-800 text-3xl">SDKs</div>
+          <div class="text-silver text-sm mt-1">Python, Node, Go</div>
         </div>
       </div>
       
-      <!-- Features grid -->
-      <div class="grid md:grid-cols-3 gap-6 mt-12">
-        <div class="animate-on-scroll stagger-1 text-center p-6">
-          <div class="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center mx-auto mb-4">
-            <i data-lucide="zap" class="w-5 h-5 text-accent"></i>
-          </div>
-          <h4 class="font-semibold mb-2">Fast Dispatch</h4>
-          <p class="text-sm text-field-400">Tasks assigned within minutes, not hours</p>
-        </div>
-        <div class="animate-on-scroll stagger-2 text-center p-6">
-          <div class="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center mx-auto mb-4">
-            <i data-lucide="webhook" class="w-5 h-5 text-accent"></i>
-          </div>
-          <h4 class="font-semibold mb-2">Webhook Results</h4>
-          <p class="text-sm text-field-400">Structured JSON delivered to your endpoint</p>
-        </div>
-        <div class="animate-on-scroll stagger-3 text-center p-6">
-          <div class="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center mx-auto mb-4">
-            <i data-lucide="map-pin" class="w-5 h-5 text-accent"></i>
-          </div>
-          <h4 class="font-semibold mb-2">Geotagged Data</h4>
-          <p class="text-sm text-field-400">Location-verified photos and metadata</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Social Proof -->
-  <section class="py-32 relative bg-field-900/30">
-    <div class="max-w-4xl mx-auto px-6 text-center">
-      <div class="animate-on-scroll">
-        <p class="text-sm text-accent font-medium tracking-widest uppercase mb-6">Built for the future</p>
-        <h2 class="text-3xl md:text-4xl font-bold mb-8">Built for the AI-native era</h2>
-        <p class="text-field-400 text-lg mb-12 max-w-2xl mx-auto">
-          We're building the infrastructure that lets AI agents interact with the physical world. The missing layer between silicon and steel.
-        </p>
-        
-        <!-- Partner logos placeholder -->
-        <div class="flex items-center justify-center gap-12 opacity-30">
-          <div class="w-24 h-8 bg-white/10 rounded"></div>
-          <div class="w-28 h-8 bg-white/10 rounded"></div>
-          <div class="w-20 h-8 bg-white/10 rounded"></div>
-          <div class="w-24 h-8 bg-white/10 rounded"></div>
-        </div>
-      </div>
     </div>
   </section>
 
   <!-- CTA Section -->
-  <section class="py-32 relative">
-    <div class="max-w-4xl mx-auto px-6 text-center">
-      <div class="animate-on-scroll gradient-border p-12 md:p-16">
-        <h2 class="text-3xl md:text-5xl font-bold mb-6">Ready to give your agents hands?</h2>
-        <p class="text-field-400 text-lg mb-10 max-w-xl mx-auto">
-          Join the waitlist and be first to access the Physical Task API.
-        </p>
-        
-        <form class="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto">
-          <input 
-            type="email" 
-            placeholder="you@company.com" 
-            class="w-full px-5 py-4 bg-field-950 border border-white/10 rounded-xl text-white placeholder-field-400 focus:outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/20 transition-all duration-200"
-          >
-          <button 
-            type="submit" 
-            class="w-full sm:w-auto px-8 py-4 bg-accent hover:bg-accent-hover text-field-950 font-semibold rounded-xl transition-all duration-200 whitespace-nowrap glow"
-          >
-            Get Early Access
-          </button>
-        </form>
-      </div>
+  <section id="waitlist" class="py-32">
+    <div class="max-w-3xl mx-auto px-6 text-center reveal">
+      
+      <h2 class="font-display font-800 text-4xl md:text-6xl">
+        Get Early Access
+      </h2>
+      <p class="text-silver text-xl mt-6 mb-12">
+        We're onboarding design partners now.<br>
+        Join the waitlist for priority access.
+      </p>
+      
+      <form class="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">
+        <input 
+          type="email" 
+          placeholder="you@company.com" 
+          class="flex-1 px-6 py-4 bg-smoke border-2 border-ash text-chalk placeholder-silver focus:border-volt focus:outline-none transition-colors"
+        >
+        <button type="submit" class="btn-brutal whitespace-nowrap">
+          Join Waitlist
+        </button>
+      </form>
+      
+      <p class="text-silver text-sm mt-8">
+        Building AI agents that need physical-world data?<br>
+        <a href="mailto:founders@fieldlayer.io" class="text-volt hover:underline">Let's talk →</a>
+      </p>
+      
     </div>
   </section>
 
   <!-- Footer -->
-  <footer class="py-12 border-t border-white/5">
-    <div class="max-w-6xl mx-auto px-6">
-      <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-        <div class="flex items-center gap-2 text-lg font-semibold">
-          <span class="text-xl">⚡</span>
-          <span>FieldLayer</span>
+  <footer class="py-16 border-t-2 border-ash">
+    <div class="max-w-7xl mx-auto px-6">
+      
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+        
+        <div>
+          <div class="font-display font-bold text-xl flex items-center gap-2">
+            <span class="bg-volt text-coal px-2 py-1">FL</span>
+            <span>FieldLayer</span>
+          </div>
+          <p class="text-silver text-sm mt-2">Physical infrastructure for AI agents.</p>
         </div>
         
-        <div class="flex items-center gap-8 text-sm text-field-400">
-          <a href="#" class="hover:text-white transition-colors">Docs</a>
-          <a href="#" class="hover:text-white transition-colors">API Reference</a>
-          <a href="#" class="hover:text-white transition-colors">Pricing</a>
-          <a href="#" class="hover:text-white transition-colors">Contact</a>
+        <div class="flex flex-wrap gap-8 text-sm text-silver">
+          <a href="#" class="hover:text-volt transition-colors">Documentation</a>
+          <a href="#" class="hover:text-volt transition-colors">API Reference</a>
+          <a href="#" class="hover:text-volt transition-colors">Pricing</a>
+          <a href="mailto:founders@fieldlayer.io" class="hover:text-volt transition-colors">Contact</a>
         </div>
         
-        <div class="text-sm text-field-500">
-          © 2025 FieldLayer
-        </div>
       </div>
       
-      <div class="text-center mt-8 text-sm text-field-600">
-        Made for AI agents, by humans <span class="text-field-500">(for now)</span>
+      <div class="divider my-8"></div>
+      
+      <div class="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-silver">
+        <span>© 2026 FieldLayer. All rights reserved.</span>
+        <span>Made for AI agents, by humans (for now).</span>
       </div>
+      
     </div>
   </footer>
 
-  <!-- Scripts -->
   <script>
     // Initialize Lucide icons
     lucide.createIcons();
     
-    // Intersection Observer for scroll animations
-    const observerOptions = {
-      root: null,
-      rootMargin: '0px',
-      threshold: 0.1
-    };
+    // Scroll reveal animations
+    const reveals = document.querySelectorAll('.reveal');
     
-    const observer = new IntersectionObserver((entries) => {
+    const revealObserver = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.classList.add('visible');
         }
       });
-    }, observerOptions);
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
     
-    document.querySelectorAll('.animate-on-scroll').forEach(el => {
-      observer.observe(el);
-    });
+    reveals.forEach(el => revealObserver.observe(el));
     
     // Smooth scroll for anchor links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-      anchor.addEventListener('click', function (e) {
+      anchor.addEventListener('click', function(e) {
         e.preventDefault();
         const target = document.querySelector(this.getAttribute('href'));
         if (target) {
-          target.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-          });
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       });
     });
   </script>
+
 </body>
 </html>
